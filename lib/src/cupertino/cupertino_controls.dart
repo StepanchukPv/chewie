@@ -19,15 +19,20 @@ import 'package:video_player/video_player.dart';
 
 class CupertinoControls extends StatefulWidget {
   const CupertinoControls({
+    Key? key,
     required this.backgroundColor,
     required this.iconColor,
     this.showPlayButton = true,
-    Key? key,
+    this.speedOptions,
   }) : super(key: key);
 
-  final Color backgroundColor;
   final Color iconColor;
+  final Color backgroundColor;
+
   final bool showPlayButton;
+
+  final Future<double> Function(double playSpeed, List<double> availableSpeeds)?
+      speedOptions;
 
   @override
   State<StatefulWidget> createState() {
@@ -547,15 +552,18 @@ class _CupertinoControlsState extends State<CupertinoControls>
       onTap: () async {
         _hideTimer?.cancel();
 
-        final chosenSpeed = await showCupertinoModalPopup<double>(
-          context: context,
-          semanticsDismissible: true,
-          useRootNavigator: chewieController.useRootNavigator,
-          builder: (context) => _PlaybackSpeedDialog(
-            speeds: chewieController.playbackSpeeds,
-            selected: _latestValue.playbackSpeed,
-          ),
-        );
+        final chosenSpeed = await widget.speedOptions?.call(
+                _latestValue.playbackSpeed, chewieController.playbackSpeeds) ??
+            // ignore: use_build_context_synchronously
+            await showCupertinoModalPopup<double>(
+              context: context,
+              semanticsDismissible: true,
+              useRootNavigator: chewieController.useRootNavigator,
+              builder: (context) => _PlaybackSpeedDialog(
+                speeds: chewieController.playbackSpeeds,
+                selected: _latestValue.playbackSpeed,
+              ),
+            );
 
         if (chosenSpeed != null) {
           controller.setPlaybackSpeed(chosenSpeed);
