@@ -24,6 +24,8 @@ class CupertinoControls extends StatefulWidget {
     required this.iconColor,
     this.showPlayButton = true,
     this.speedOptions,
+    this.positionConstraints,
+    this.remainingConstraints,
   }) : super(key: key);
 
   final Color iconColor;
@@ -31,8 +33,14 @@ class CupertinoControls extends StatefulWidget {
 
   final bool showPlayButton;
 
-  final Future<double> Function(double playSpeed, List<double> availableSpeeds)?
-      speedOptions;
+  final BoxConstraints? positionConstraints;
+  final BoxConstraints? remainingConstraints;
+
+  final Future<double> Function(
+    BuildContext context,
+    double playSpeed,
+    List<double> availableSpeeds,
+  )? speedOptions;
 
   @override
   State<StatefulWidget> createState() {
@@ -447,7 +455,8 @@ class _CupertinoControlsState extends State<CupertinoControls>
   Widget _buildPosition(Color iconColor) {
     final position = _latestValue.position;
 
-    return Padding(
+    return Container(
+      constraints: widget.positionConstraints,
       padding: const EdgeInsets.only(right: 12.0),
       child: Text(
         formatDuration(position),
@@ -462,7 +471,8 @@ class _CupertinoControlsState extends State<CupertinoControls>
   Widget _buildRemaining(Color iconColor) {
     final position = _latestValue.duration - _latestValue.position;
 
-    return Padding(
+    return Container(
+      constraints: widget.remainingConstraints,
       padding: const EdgeInsets.only(right: 12.0),
       child: Text(
         '-${formatDuration(position)}',
@@ -552,8 +562,12 @@ class _CupertinoControlsState extends State<CupertinoControls>
       onTap: () async {
         _hideTimer?.cancel();
 
+        // ignore: use_build_context_synchronously
         final chosenSpeed = await widget.speedOptions?.call(
-                _latestValue.playbackSpeed, chewieController.playbackSpeeds) ??
+              context,
+              _latestValue.playbackSpeed,
+              chewieController.playbackSpeeds,
+            ) ??
             // ignore: use_build_context_synchronously
             await showCupertinoModalPopup<double>(
               context: context,
